@@ -1,0 +1,24 @@
+os: linux
+language: shell
+
+branches:
+  only:
+  - master
+
+services:
+  - docker
+
+install:
+  - export PATH="${HOME}/bin:${PATH}"
+  - curl -L -o hadolint "https://github.com/hadolint/hadolint/releases/download/v1.17.3/hadolint-$(uname -s)-$(uname -m)" && chmod 755 hadolint && mv hadolint ${HOME}/bin/ && hadolint --version
+  - curl -L "https://storage.googleapis.com/shellcheck/shellcheck-stable.linux.$(uname -m).tar.xz" | tar -xJv && mv "shellcheck-stable/shellcheck" ${HOME}/bin/ && shellcheck --version
+
+before_script:
+  - docker_violations=$(hadolint Dockerfile | tee /dev/stderr | wc -l)
+  - if [ $docker_violations -gt 0 ]; then exit 2; else echo "No hadolint violations"; fi
+  - shellcheck *.sh && echo "No shellcheck violations"
+
+script:
+  - echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
+  - docker build -t "$DOCKER_USER/docker-skeleton" .
+  - docker push "$DOCKER_USER/docker-skeleton"

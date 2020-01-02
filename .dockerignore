@@ -1,0 +1,5 @@
+# Ignore any not relevant file
+.travis.yml
+LICENCE
+README.md
+
